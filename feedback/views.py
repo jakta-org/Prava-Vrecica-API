@@ -14,6 +14,10 @@ class FeedbackView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def get(self, request, format=None):
-        feedback = Feedback.objects.all()
+        num = request.GET.get('num', None)
+        if num is not None:
+            feedback = Feedback.objects.filter(id__lte=num).order_by('-id')[:10]
+        else:
+            feedback = Feedback.objects.all()
         serializer = FeedbackSerializer(feedback, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

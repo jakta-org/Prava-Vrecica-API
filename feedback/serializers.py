@@ -1,13 +1,14 @@
 from rest_framework import serializers
 from .models import Feedback
+import base64
 
-class FeedbackSerializer(serializers.Serializer):
-    id = serializers.ReadOnlyField()
-    image = serializers.CharField(required=True, max_length=100)
-    user_id = serializers.CharField(required=False, max_length=100, default="")
-    message = serializers.CharField(required=False, max_length=1000, default="")
-    date = serializers.DateTimeField(required=True)
-    is_correct = serializers.BooleanField(required=True)
+class FeedbackSerializer(serializers.ModelSerializer):
+    image_data = serializers.SerializerMethodField()
 
-    def create(self, validated_data):
-        return Feedback.objects.create(**validated_data)
+    def get_image_data(self, obj):
+        data = obj.image.read()
+        return base64.b64encode(data).decode('utf-8')
+
+    class Meta:
+        model = Feedback
+        fields = ['id', 'frames_data', 'image_data', 'user_id', 'message', 'upload_date', 'is_correct', 'detected_object_id', 'correct_object_id']
