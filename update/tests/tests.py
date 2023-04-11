@@ -1,7 +1,7 @@
 import os
 from django.core.files.uploadedfile import SimpleUploadedFile
 import datetime
-from ..models import AI_regions, Mapping_regions
+from ..models import AI_regions, Mapping
 from .test_util import create_ai_test_model
 from .. import settings
 from django.test import TestCase

@@ -4,48 +4,32 @@ from django.utils import timezone
 import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
-from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import BaseUserManager
+from .managers import CustomUserManager
 
 class Token(models.Model):
-    key = models.CharField(max_length=40, primary_key=True)
+    token = models.CharField(max_length=40, primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField(default=timezone.now)
+    is_active = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
-        if not self.key:
-            self.key = uuid.uuid4().hex
+        if not self.token:
+            self.token = uuid.uuid4().hex
         return super().save(*args, **kwargs)
-    
-class CustomUserManager(BaseUserManager):
-    def create_user(self, email, password=None, **extra_fields):
-        """
-        Creates and saves a new user with the given email and password.
-        """
-        if not email:
-            raise ValueError('Users must have an email address')
-        user = self.model(email=self.normalize_email(email), **extra_fields)
-        user.password = make_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_superuser(self, email, password=None, **extra_fields):
-        """
-        Creates and saves a new superuser with the given email and password.
-        """
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        return self.create_user(email, password, **extra_fields)
     
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
-    username = models.CharField(max_length=30, unique=True)
+    phone_number = models.CharField(max_length=30, blank=True, null=True)
+    username = models.CharField(max_length=30, blank=True)
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=30, blank=True)
-    user_mode = models.SmallIntegerField(default=0, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)
+    google_id = models.CharField(max_length=100, blank=True)
+    apple_id = models.CharField(max_length=100, blank=True)
+    meta_data = models.JSONField(blank=True, null=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
@@ -60,4 +44,21 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.first_name
-    
+
+
+class EntranceKey(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=6, blank=False, null=False)
+    group_id = models.IntegerField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    uses_left = models.IntegerField(default=None, blank=True, null=True)
+    expires_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = uuid.uuid4().hex[:6]
+        return super().save(*args, **kwargs)
+
+class UserGroup(models.Model):
+    pass

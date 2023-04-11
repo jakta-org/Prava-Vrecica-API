@@ -1,19 +1,27 @@
-from django.shortcuts import render
 from .models import User, Token
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import CustomUserSerializer
-from django.contrib.auth.hashers import make_password
+from .serializers import EntranceKeySerializer, NewKeyUserSerializer
+from rest_framework.decorators import api_view
 
 class UserViews(APIView):
-    def post(self, request, format='json'):
-        serializer = CustomUserSerializer(data=request.data)
+    def post(self, request, format=None):
+        entrance_code = request.data.get('entrance_code')
+
+        if entrance_code:
+            serializer = NewKeyUserSerializer(data=request.data)
+        else:
+            serializer = CustomUserSerializer(data=request.data)
+
         if serializer.is_valid():
-            user = serializer.save()
+            serializer.validated_data.pop('entrance_code', None)
+            user = User.objects.create_user(**serializer.validated_data)
             if user:
                 token = Token.objects.create(user=user)
-                return Response({'token': token.key}, status=status.HTTP_201_CREATED)
+                return Response({'token': token.token}, status=status.HTTP_201_CREATED)
+            
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
@@ -23,18 +31,26 @@ class TokenViews(APIView):
         username = request.data.get('username')
         password = request.data.get('password')
 
-        # print(username, Token.objects.all()[0].key)
-        if mail and password:
-            user = User.objects.filter(email=mail, password=password).first()
-            if user:
-                token = Token.objects.get(user=user)
-                return Response({'token': token.token}, status=status.HTTP_200_OK)
-            
-        elif username and password:
+        if not mail and not username or not password:
+            return Response({'error': 'Invalid Credentials'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if mail:
+            user = User.objects.get(email=mail)
+        elif username:
             user = User.objects.get(username=username)
-            
-            if user:
-                token = Token.objects.get(user=user)
-                return Response({'token': token.token}, status=status.HTTP_200_OK)
+
+        if user and user.check_password(password):
+            token = Token.objects.get(user=user)
+            return Response({'token': token.token}, status=status.HTTP_200_OK)
         
         return Response({'error': 'Invalid Credentials'}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def create_entrance_key(request):
+    serializer = EntranceKeySerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        data = {'entrance_code': serializer.data['code'],
+                'success': 'Entrance Key Created'}
+        return Response(data=data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

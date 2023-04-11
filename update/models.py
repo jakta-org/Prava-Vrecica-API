@@ -8,9 +8,18 @@ from django.db import models
 from django.conf import settings as proj_settings
 
 # Mapping model
-class Mapping_regions(models.Model):
-    location = models.CharField(max_length=100)
-    file_location = models.CharField(max_length=100)
+class Mapping(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100)
+    coordinates = models.JSONField()
+    data = models.JSONField(blank=True, null=True)
+    upvotes = models.IntegerField(default=0)
+    creator_id = models.IntegerField(null=True, blank=True)
+
+class Localization(models.Model):
+    AI_version = models.CharField(max_length=100)
+    tag = models.CharField(max_length=10, unique=True)
+    data = models.JSONField()
 
 class AI_regions(models.Model):
     version = models.CharField(max_length=100)
