@@ -26,7 +26,9 @@ SECRET_KEY = 'django-insecure-2u5w=92hpu#(+8yj69e@nz!t0$@xl-h69+xg%wzm9()gp4i^fa
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '192.168.0.14'
+    '192.168.0.14',
+    '127.0.0.1',
+    'karlo13.pythonanywhere.com',
 ]
 
 
@@ -57,8 +59,9 @@ MIDDLEWARE = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser'
-        # add any other parser classes you want to use
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',

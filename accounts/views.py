@@ -1,3 +1,4 @@
+from django.http import HttpRequest
 from .models import User, Token
 from rest_framework import status
 from rest_framework.response import Response
@@ -26,7 +27,8 @@ class UserViews(APIView):
     
 
 class TokenViews(APIView):
-    def post(self, request, format=None):
+    def post(self, request: HttpRequest, format=None):
+        print(request.content_type)
         mail = request.data.get('email')
         username = request.data.get('username')
         password = request.data.get('password')

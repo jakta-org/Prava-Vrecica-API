@@ -6,14 +6,14 @@ from django.db.models import Q
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id','email', 'username', 'first_name', 'last_name', 'password')
+        fields = ('id','email', 'username', 'first_name', 'last_name', 'password', 'phone_number')
 
 class NewKeyUserSerializer(serializers.ModelSerializer):
     entrance_code = serializers.CharField(max_length=6, write_only=True)
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'first_name', 'last_name', 'password', 'entrance_code')
+        fields = ('email', 'username', 'first_name', 'last_name', 'password', 'phone_number', 'entrance_code')
 
     # validate entrance_code
     def validate_entrance_code(self, value):
