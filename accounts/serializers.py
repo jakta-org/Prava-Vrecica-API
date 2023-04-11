@@ -13,7 +13,7 @@ class NewKeyUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'first_name', 'last_name', 'password', 'phone_number', 'entrance_code')
+        fields = ('id','email', 'username', 'first_name', 'last_name', 'password', 'phone_number', 'entrance_code')
 
     # validate entrance_code
     def validate_entrance_code(self, value):
@@ -26,16 +26,9 @@ class NewKeyUserSerializer(serializers.ModelSerializer):
             (Q(uses_left__isnull=True) | Q(uses_left__gt=0))
         ).first()
 
-        #     expires_at is None or key.expires_at > datetime.now()) and
-        #     (key.uses_left is None or key.uses_left > 0)
-        # ).first()
-
         if key is None:
             raise serializers.ValidationError('Entrance Code Expired')
-        
-        if key.uses_left != None:
-            key.uses_left -= 1
-            key.save()
+
         return value
 
 

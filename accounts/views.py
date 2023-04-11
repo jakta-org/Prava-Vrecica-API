@@ -1,5 +1,5 @@
 from django.http import HttpRequest
-from .models import User, Token
+from .models import EntranceKey, User, Token
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,22 +13,31 @@ class UserViews(APIView):
 
         if entrance_code:
             serializer = NewKeyUserSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.validated_data.pop('entrance_code', None)
+                user = User.objects.create_user(**serializer.validated_data)
+                if user:
+                    key = EntranceKey.objects.get(code=entrance_code)
+                    if key.uses_left != None:
+                        key.uses_left -= 1
+                        key.save()
+
+                    token = Token.objects.create(user=user)
+                    return Response({'token': token.token}, status=status.HTTP_201_CREATED)
         else:
             serializer = CustomUserSerializer(data=request.data)
-
-        if serializer.is_valid():
-            serializer.validated_data.pop('entrance_code', None)
-            user = User.objects.create_user(**serializer.validated_data)
-            if user:
-                token = Token.objects.create(user=user)
-                return Response({'token': token.token}, status=status.HTTP_201_CREATED)
+            if serializer.is_valid():
+                serializer.validated_data.pop('entrance_code', None)
+                user = User.objects.create_user(**serializer.validated_data)
+                if user:
+                    token = Token.objects.create(user=user)
+                    return Response({'token': token.token}, status=status.HTTP_201_CREATED)
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 class TokenViews(APIView):
     def post(self, request: HttpRequest, format=None):
-        print(request.content_type)
         mail = request.data.get('email')
         username = request.data.get('username')
         password = request.data.get('password')

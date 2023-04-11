@@ -8,3 +8,6 @@
 
 7. get all objects (objects/)
 8. get localization # prijevodi za app 
+
+
+BUG: managers.CustomUserManager.create_user_with_key

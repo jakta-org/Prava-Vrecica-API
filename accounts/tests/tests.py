@@ -1,4 +1,3 @@
-from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -178,3 +177,30 @@ class CustomUserTests(APITestCase):
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(EntranceKey.objects.first().uses_left, 0)
         self.assertEqual(EntranceKey.objects.first().expires_at, date_tommorow)
+    
+    # test create user with entrance code but duplicate email
+    def test_create_user_with_entrance_code_duplicate_email(self):
+        # create entrance key
+        url = reverse('create_entrance_key')
+        date_tommorow = timezone.now() + timezone.timedelta(days=1)
+        data = {
+            'expires_at': date_tommorow,
+            'uses_left': 5
+        }
+        response = self.client.post(url, data)
+
+        code = response.data['entrance_code']
+
+        url = reverse('create_user')
+        data = {
+            'email': 'test@example.com',
+            'username': 'testuser',
+            'password': 'testpassword',
+            'entrance_code': code
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(User.objects.count(), 1)
+        self.assertEqual(EntranceKey.objects.first().uses_left, 5)
+        self.assertEqual(EntranceKey.objects.first().expires_at, date_tommorow)
+
