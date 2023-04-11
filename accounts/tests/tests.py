@@ -68,6 +68,33 @@ class CustomUserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertNotIn('token', response.data)
 
+    def test_token_authentication_no_credentials(self):
+        url = reverse('get_token')
+        data = {}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn('token', response.data)
+
+    def test_token_authentication_invalid_data(self):
+        url = reverse('get_token')
+        data = {
+            'username': 123,
+            'password': 123
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn('token', response.data)
+
+    def test_token_authentication_invalid_username(self):
+        url = reverse('get_token')
+        data = {
+            'username': 'invaliduser',
+            'password': 'testpassword'
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn('token', response.data)
+
     # test entrance key creation
     def test_create_entrance_key(self):
         url = reverse('create_entrance_key')
