@@ -33,8 +33,7 @@ class UserViews(APIView):
                     token = Token.objects.create(user=user)
                     return Response({'token': token.token}, status=status.HTTP_201_CREATED)
             
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
 
 class TokenViews(APIView):
     def post(self, request: HttpRequest, format=None):
