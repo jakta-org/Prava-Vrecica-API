@@ -1,9 +1,7 @@
 from django.http import HttpResponseForbidden
 from django.http import HttpResponseNotFound
 from django.http import HttpResponse
-from django.contrib.auth.decorators import user_passes_test
 from .models import User
-
 
 def require_user_owner(view_func):
     """
