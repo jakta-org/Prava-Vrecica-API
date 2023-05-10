@@ -12,18 +12,21 @@ import requests, json
 # print(response.status_code)
 # print(response.content)
 
-
-
 # test get token
-url = 'http://127.0.0.1:8000/accounts/token/'
+url = 'http://127.0.0.1:8000/accounts/user/3'
 
 data = {
-    'username': 'testuse232r',
+    'username': 'testuser',
     'password': 'testpassword',
-    'email': 'tes8t@example.com'
+    'email': 'test@example.com'
 }
-header = {'content-type': 'application/json'}
-response = requests.post(url, data=json.dumps(data), headers=header)
+header = {
+    'content-type': 'application/json',
+    'Authorization': 'Token c3adc59c4fe9477e955d7cc1cbb44fe1' 
+}
+# provide token b'{"token":"c3adc59c4fe9477e955d7cc1cbb44fe1"}'
+
+response = requests.get(url, data=json.dumps(data), headers=header)
 
 print(response.status_code)
 print(response.content)

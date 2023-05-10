@@ -12,7 +12,11 @@ class CustomUserTests(APITestCase):
             username='testuser',
             password='testpassword'
         )
-        Token.objects.create(user=self.user)
+        self.user.save()
+        self.token = Token.objects.create(user=self.user)
+        self.token.save()
+
+    # TEST USER CREATION
 
     def test_create_user(self):
         url = reverse('create_user')
@@ -48,6 +52,8 @@ class CustomUserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(User.objects.count(), 1)
 
+    # TEST GET TOKEN
+
     def test_token_authentication(self):
         url = reverse('get_token')
         data = {
@@ -57,6 +63,7 @@ class CustomUserTests(APITestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('token', response.data)
+        self.assertEqual(response.data['token'], self.token.token)
 
     def test_token_authentication_invalid_credentials(self):
         url = reverse('get_token')
@@ -95,27 +102,8 @@ class CustomUserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertNotIn('token', response.data)
 
-    # test create user and login with token
-    def test_create_user_and_login_with_token(self):
-        url = reverse('create_user')
-        data = {
-            'email': 'test2@example.com',
-            'username': 'testuser2',
-            'password': 'testpassword2'
-        }
-        response = self.client.post(url, data)
-        token = response.data['token']
-
-        url = reverse('get_token')
-        data = {
-            'username': 'testuser2',
-            'password': 'testpassword2'
-        }
-        response = self.client.post(url, data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['token'], token)
-
-    # test entrance key creation
+    # TEST CREATE_ENTRANCE_KEY
+    
     def test_create_entrance_key(self):
         url = reverse('create_entrance_key')
         data = {
@@ -128,7 +116,6 @@ class CustomUserTests(APITestCase):
         self.assertEqual(EntranceKey.objects.count(), 1)
         self.assertEqual(EntranceKey.objects.get(group_id=1).uses_left, 5)
 
-    # test entrance key creation with invalid data
     def test_create_entrance_key_invalid_data(self):
         url = reverse('create_entrance_key')
         data = {
@@ -140,7 +127,6 @@ class CustomUserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(EntranceKey.objects.count(), 0)
     
-    # test entrance key creation with no data (should default to unlimited uses and no expiration)
     def test_create_entrance_key_no_uses_or_expiration(self):
         url = reverse('create_entrance_key')
         data = {}
@@ -150,7 +136,6 @@ class CustomUserTests(APITestCase):
         self.assertEqual(EntranceKey.objects.first().uses_left, None)
         self.assertEqual(EntranceKey.objects.first().expires_at, None)
 
-    # test create user with entrance code
     def test_create_user_with_entrance_code(self):
         # create entrance key
         url = reverse('create_entrance_key')
@@ -175,7 +160,6 @@ class CustomUserTests(APITestCase):
         self.assertEqual(EntranceKey.objects.first().uses_left, 4)
         self.assertEqual(EntranceKey.objects.first().expires_at, date_tommorow)
 
-    # test create user with entrance code that has expired
     def test_create_user_with_expired_entrance_code(self):
         # create entrance key
         url = reverse('create_entrance_key')
@@ -200,7 +184,6 @@ class CustomUserTests(APITestCase):
         self.assertEqual(EntranceKey.objects.first().uses_left, 5)
         self.assertEqual(EntranceKey.objects.first().expires_at, date_yesterday)
 
-    # test create user with entrance code that has no uses left
     def test_create_user_with_entrance_code_with_no_uses_left(self):
         # create entrance key
         url = reverse('create_entrance_key')
@@ -225,7 +208,6 @@ class CustomUserTests(APITestCase):
         self.assertEqual(EntranceKey.objects.first().uses_left, 0)
         self.assertEqual(EntranceKey.objects.first().expires_at, date_tommorow)
     
-    # test create user with entrance code but duplicate email
     def test_create_user_with_entrance_code_duplicate_email(self):
         # create entrance key
         url = reverse('create_entrance_key')
@@ -250,4 +232,180 @@ class CustomUserTests(APITestCase):
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(EntranceKey.objects.first().uses_left, 5)
         self.assertEqual(EntranceKey.objects.first().expires_at, date_tommorow)
+
+    # TEST GET USER DETAILS
+
+    def test_get_user_details(self):
+        url = reverse('user_details', args=[self.user.id])
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['email'], 'test@example.com')
+        self.assertEqual(response.data['username'], 'testuser')
+
+    def test_get_user_details_no_token(self):
+        url = reverse('user_details', args=[self.user.id]) 
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_user_details_invalid_token(self):
+        url = reverse('user_details', args=[self.user.id]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + 'invalidtoken')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_user_details_invalid_user_id(self):
+        url = reverse('user_details', args=["123"]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_user_is_not_owner(self):
+        user2 = User.objects.create_user(
+            email='test2@example.com',
+            username='testuser2',
+            password='testpassword'
+        )
+        token = Token.objects.create(user=user2)
+        id2 = user2.id
+
+        url = reverse('user_details', args=[self.user.id])
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_user_not_active(self):
+        self.user.is_active = False
+        self.user.save()
+
+        url = reverse('user_details', args=[self.user.id]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_user_token_not_active(self):
+        self.token.is_active = False
+        self.token.save()
+
+        url = reverse('user_details', args=[self.user.id]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    # TEST USER META DATA
+
+    def test_get_user_meta_data(self):
+        url = reverse('user_meta_data', args=[self.user.id]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, None)
+
+    def test_get_user_meta_data_no_token(self):
+        url = reverse('user_meta_data', args=[self.user.id]) 
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_user_meta_data_invalid_token(self):
+        url = reverse('user_meta_data', args=[self.user.id]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + 'invalidtoken')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_user_meta_data_invalid_user_id(self):
+        url = reverse('user_meta_data', args=["123"]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_user_meta_data_is_not_owner(self):
+        user2 = User.objects.create_user(
+            email='test2@example.com',
+            username='testuser2',
+            password='testpassword'
+        )
+        token = Token.objects.create(user=user2)
+        id2 = user2.id
+
+        url = reverse('user_meta_data', args=[self.user.id])
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_user_meta_data_not_active(self):
+        self.user.is_active = False
+        self.user.save()
+
+        url = reverse('user_meta_data', args=[self.user.id]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_set_user_meta_data(self):
+        url = reverse('user_meta_data', args=[self.user.id]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        data = {
+            'key': 'value'
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['key'], 'value')
+
+    def test_set_user_meta_data_no_token(self):
+        url = reverse('user_meta_data', args=[self.user.id]) 
+        data = {
+            'key': 'value'
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_set_user_meta_data_invalid_token(self):
+        url = reverse('user_meta_data', args=[self.user.id]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + 'invalidtoken')
+        data = {
+            'key': 'value'
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_set_user_meta_data_invalid_user_id(self):
+        url = reverse('user_meta_data', args=["123"]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        data = {
+            'key': 'value'
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_set_user_meta_data_is_not_owner(self):
+        user2 = User.objects.create_user(
+            email='test2@example.com',
+            username='testuser2',
+            password='testpassword'
+        )
+        token = Token.objects.create(user=user2)
+        id2 = user2.id
+
+        url = reverse('user_meta_data', args=[self.user.id])
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.token)
+        data = {
+            'key': 'value'
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_set_user_meta_data_not_active(self):
+        self.user.is_active = False
+        self.user.save()
+
+        url = reverse('user_meta_data', args=[self.user.id])
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        data = {
+            'key': 'value'
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+    
 

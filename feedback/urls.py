@@ -1,6 +1,6 @@
-from django.conf.urls import url
+from django.urls import path
 from . import views
 
 urlpatterns = [
-    url('', views.get_update, name='get_update'),
+    path('feedback/', views.FeedbackView.as_view(), name='feedback'),
 ]

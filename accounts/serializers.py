@@ -31,6 +31,10 @@ class NewKeyUserSerializer(serializers.ModelSerializer):
 
         return value
 
+class GetUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id','email', 'username', 'first_name', 'last_name', 'phone_number')
 
 class EntranceKeySerializer(serializers.ModelSerializer):
     code = serializers.CharField(max_length=6, read_only=True)

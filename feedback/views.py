@@ -1,18 +1,31 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from accounts.authentication import CustomTokenAuthentication
 
+from django.contrib.auth.decorators import login_required
 from .models import Feedback
-from .serializers import FeedbackSerializer
+from .serializers import FeedbackSerializer, FeedbackRespondSerializer
+
+from accounts.decorators import *
+
+from django.utils.decorators import method_decorator
 
 class FeedbackView(APIView):
+    @method_decorator(require_user_authenticated)
     def post(self, request, format=None):
-        serializer = FeedbackSerializer(data=request.data)
+        data = request.data.copy()
+        data['user'] = request.user.id
+        serializer = FeedbackSerializer(data=data)
+
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            #serializer.create(serializer.validated_data)
+            feedback = serializer.save(user=request.user)
+            serializer = FeedbackRespondSerializer(feedback)
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    @method_decorator(require_user_authenticated)
     def get(self, request, format=None):
         num = request.GET.get('num', None)
         if num is not None:

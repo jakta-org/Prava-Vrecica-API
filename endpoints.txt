@@ -1,0 +1,69 @@
+
+root = https://karlo13.pythonanywhere.com/
+
+/accounts/entrance-key/
+	POST:
+        int group_id        - opcinalno
+		datetime expires_at - opcinalno
+		int uses_left       - opcinalno
+		--------> 
+        returns entrance_code
+
+/accounts/user/
+	POST:
+		string email
+		string password
+		string username     - opcinalno
+		string entrance_code - opcinalno
+		--------> 
+        returns token
+
+/accounts/token/
+	POST:
+		string username / email
+		string password
+		---------> 
+        returns token
+
+/accounts/user/<int:pk>/
+    GET:
+        {require token}
+        ---------> 
+        returns user info
+
+/accounts/user/<int:pk>/meta_data/
+    GET:
+        {require token}
+        ---------> 
+        returns meta data
+    
+    POST:
+        {require token}
+        string meta_data (json format)
+        ---------> 
+        returns  meta data
+
+/feedback/feedback/
+    POST:
+        {require token}
+        string 	image 		(base64 encoded image)
+        string  file_name 	(obavezno, jer moram znat ekstenziju)
+        string 	objects_data 	(json format)
+        string 	message 	- opcionalno
+        bool 	is_trusted 	- opcionalno (iskreno nez kad bi ovo koristili)
+        ---------> 
+        returns  feedback
+
+
+Sve argumente za POST stavljas u body
+
+Kako se stavlja token u header:
+request: 
+{
+    header: {
+        'Authorization' : 'Token c3adc59c4fe9477e955d7cc1cbb44fe1'
+    },
+    body: {
+        ...
+    }
+}

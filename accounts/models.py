@@ -5,18 +5,28 @@ import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from .managers import CustomUserManager
+from . import settings as set
+import string, random
+from datetime import timedelta
 
 class Token(models.Model):
     token = models.CharField(max_length=40, primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(default=timezone.now)
-    expires_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField()
     is_active = models.BooleanField(default=True)
+
+    objects = models.Manager()
 
     def save(self, *args, **kwargs):
         if not self.token:
             self.token = uuid.uuid4().hex
+        
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(seconds=set.TOKEN_EXPIRATION_TIME)
+
         return super().save(*args, **kwargs)
+    
     
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
@@ -57,7 +67,8 @@ class EntranceKey(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.code:
-            self.code = uuid.uuid4().hex[:6]
+            characters = string.ascii_uppercase + string.digits
+            self.code = ''.join(random.choices(characters, k=6))
         return super().save(*args, **kwargs)
 
 class UserGroup(models.Model):

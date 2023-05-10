@@ -1,14 +1,29 @@
 from rest_framework import serializers
 from .models import Feedback
 import base64
+from django.core.files.base import ContentFile
 
 class FeedbackSerializer(serializers.ModelSerializer):
-    image_data = serializers.SerializerMethodField()
-
-    def get_image_data(self, obj):
-        data = obj.image.read()
-        return base64.b64encode(data).decode('utf-8')
+    image = serializers.CharField()
+    file_name = serializers.CharField()
 
     class Meta:
         model = Feedback
-        fields = ['id', 'frames_data', 'image_data', 'user_id', 'message', 'upload_date', 'is_correct', 'detected_object_id', 'correct_object_id']
+        fields = ['objects_data', 'image', 'message', 'is_trusted', 'user','file_name']
+
+    def create(self, validated_data):
+        image_data = validated_data.pop('image')
+        file_name = validated_data.pop('file_name')
+
+        feedback = Feedback.objects.create(**validated_data)
+
+        ext = file_name.split('.')[-1]
+        file_name = str(feedback.id) + '.' + ext
+
+        feedback.image.save(file_name, ContentFile(base64.b64decode(image_data)), save=True)
+        return feedback
+    
+class FeedbackRespondSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = ['message', 'is_trusted', 'user', 'id']
