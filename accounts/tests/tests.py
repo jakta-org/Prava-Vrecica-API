@@ -10,7 +10,9 @@ class CustomUserTests(APITestCase):
         self.user = User.objects.create_user(
             email='test@example.com',
             username='testuser',
-            password='testpassword'
+            password='testpassword',
+            is_active=True,
+            is_staff=True,
         )
         self.user.save()
         self.token = Token.objects.create(user=self.user)
@@ -51,6 +53,43 @@ class CustomUserTests(APITestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(User.objects.count(), 1)
+
+    # TEST GET USER LIST
+
+    def test_get_user_list(self):
+        url = reverse('get_user_list')
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['email'], 'test@example.com')
+
+    def test_get_user_list_no_token(self):
+        url = reverse('get_user_list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_user_list_invalid_token(self):
+        url = reverse('get_user_list')
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + 'invalidtoken')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_user_list_not_admin(self):
+        user2 = User.objects.create_user(
+            email='test2@example.com',
+            username='testuser2',
+            password='testpassword',
+            is_active=True,
+            is_staff=False,
+        )
+        token = Token.objects.create(user=user2)
+        id2 = user2.id
+
+        url = reverse('get_user_list')
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     # TEST GET TOKEN
 

@@ -1,6 +1,7 @@
 from django.http import HttpResponseForbidden
 from django.http import HttpResponseNotFound
 from django.http import HttpResponse
+from django.contrib.auth.decorators import user_passes_test
 from .models import User
 
 
@@ -20,22 +21,24 @@ def require_user_owner(view_func):
         return view_func(request, *args, **kwargs)
     return wrapped_view
 
-def require_user_active(view_func):
-    """
-    Decorator to require that the user is active.
-    """
-    def wrapped_view(request, *args, **kwargs):
-        if not request.user.is_active:
-            return HttpResponseForbidden('You do not have permission to access this resource.')
-        return view_func(request, *args, **kwargs)
-    return wrapped_view
-
 def require_user_authenticated(view_func):
     """
-    Decorator to require that the user is authenticated / token is provided.
+    Decorator to require that the user is authenticated.
     """
     def wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return HttpResponse("Authentication failed, provide token", status=401)
+        return view_func(request, *args, **kwargs)
+    return wrapped_view
+
+def admin_required(view_func):
+    """
+    Decorator to require that the user is admin.
+    """
+    def wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return HttpResponse("Authentication failed, provide token", status=401)
+        if not request.user.is_staff:
+            return HttpResponseForbidden("Admin access required")
         return view_func(request, *args, **kwargs)
     return wrapped_view

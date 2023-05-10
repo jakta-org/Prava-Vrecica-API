@@ -40,10 +40,10 @@ class UserViews(APIView):
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
     
-    @authentication_classes([CustomTokenAuthentication])
+    @method_decorator(admin_required)
     def get(self, request, format=None):
         users = User.objects.all()
-        serializer = CustomUserSerializer(users, many=True)
+        serializer = GetUserSerializer(users, many=True)
         return Response(serializer.data)
 
 class TokenViews(APIView):
