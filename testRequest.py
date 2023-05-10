@@ -1,39 +1,25 @@
 import requests, json
 
-# post new entrance key
-# url = 'http://127.0.0.1:8000/accounts/entrance-key/'
-# url = 'https://karlo13.pythonanywhere.com/accounts/entrance-key/'
 
-# data = {'expires_at': '2024-12-31T23:59:59Z', 'uses_left': 5}
-# data = {'email': 'test@example.com', 'password': 'testpassword'}
-
-# header = {'content-type': 'application/json'}
-# response = requests.post(url, data=json.dumps(data), headers=header)
-# print(response.status_code)
-# print(response.content)
-
-# test get token
-url = 'http://127.0.0.1:8000/accounts/user/3'
+url = 'http://127.0.0.1:8000/accounts/user/2/'
+url = 'http://127.0.0.1:8000/accounts/token/'
 
 data = {
-    'username': 'testuser',
-    'password': 'testpassword',
-    'email': 'test@example.com'
+    #'username': 'testuser',
+    'password': '1234',
+    'email': 'karlovrd@gmail.com'
 }
 header = {
     'content-type': 'application/json',
-    'Authorization': 'Token c3adc59c4fe9477e955d7cc1cbb44fe1' 
+    #'Authorization': 'Token 7d67cc874c6d4bf4918ad2d07cbab989' 
 }
-# provide token b'{"token":"c3adc59c4fe9477e955d7cc1cbb44fe1"}'
 
-response = requests.get(url, data=json.dumps(data), headers=header)
+# karlovrd@gmail.com - 7d67cc874c6d4bf4918ad2d07cbab989
+
+response = requests.post(url, data=json.dumps(data), headers=header)
 
 print(response.status_code)
 print(response.content)
-
-
-
-
 
 
 

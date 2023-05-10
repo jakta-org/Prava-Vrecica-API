@@ -63,7 +63,7 @@ class CustomUserTests(APITestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('token', response.data)
-        self.assertEqual(response.data['token'], self.token.token)
+        self.assertNotEqual(response.data['token'], self.token.token)
 
     def test_token_authentication_invalid_credentials(self):
         url = reverse('get_token')

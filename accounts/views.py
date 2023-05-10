@@ -62,7 +62,7 @@ class TokenViews(APIView):
             user = User.objects.filter(username=username).first()
             
         if user and user.check_password(password):
-            token = Token.objects.filter(user=user).first()
+            token = Token.objects.create(user=user)
             return Response({'token': token.token}, status=status.HTTP_200_OK)
         
         return Response({'error': 'Invalid Credentials'}, status=status.HTTP_400_BAD_REQUEST)
