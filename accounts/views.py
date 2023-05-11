@@ -63,7 +63,8 @@ class TokenViews(APIView):
             
         if user and user.check_password(password):
             token = Token.objects.create(user=user)
-            return Response({'token': token.token}, status=status.HTTP_200_OK)
+            serializer = GetUserSerializer(user)
+            return Response({'token': token.token, 'user': serializer.data}, status=status.HTTP_200_OK)
         
         return Response({'error': 'Invalid Credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
