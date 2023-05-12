@@ -29,6 +29,7 @@ class Token(models.Model):
     
     
 class User(AbstractBaseUser, PermissionsMixin):
+    id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=30, blank=True, null=True)
     username = models.CharField(max_length=30, blank=True)
@@ -48,7 +49,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     def __str__(self):
-        return self.email
+        return f"{self.email}, {self.id}"
 
     def get_full_name(self):
         return f'{self.first_name} {self.last_name}'
@@ -93,5 +94,8 @@ class UserGroup(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     is_moderator = models.BooleanField(default=False)
     meta_data = models.JSONField(blank=True, null=True)
+
+    def __str__(self) -> str:
+        return f'{self.user} - {self.group}'
     
 

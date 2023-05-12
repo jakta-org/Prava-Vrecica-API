@@ -1,17 +1,18 @@
 import requests, json
 
 
-url = 'http://127.0.0.1:8000/accounts/user/2/'
 url = 'http://127.0.0.1:8000/accounts/token/'
+url = 'http://127.0.0.1:8000/accounts/group/'
 
 data = {
     #'username': 'testuser',
     'password': '1234',
-    'email': 'karlovrd@gmail.com'
+    'email': 'karlovrd@gmail.com',
+    'type': 'test',
 }
 header = {
     'content-type': 'application/json',
-    #'Authorization': 'Token 7d67cc874c6d4bf4918ad2d07cbab989' 
+    'Authorization': 'Token b0294294d4324ff59373e3696c09982c' 
 }
 
 # karlovrd@gmail.com - 7d67cc874c6d4bf4918ad2d07cbab989

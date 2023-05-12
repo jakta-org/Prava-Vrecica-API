@@ -156,7 +156,8 @@ class UserMetaDataViews(APIView):
 def create_group(request):
     serializer = CreateGroupSerializer(data=request.data)
     if serializer.is_valid():
-        group = serializer.save()  # save the serializer to create the group object
+        group = Group.objects.create(**serializer.validated_data)
+
         UserGroup.objects.create(group=group, user=request.user, is_moderator=True)
         data = {'group_param': group.id,
                 'success': 'Group Created, user is moderator'}
