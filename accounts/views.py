@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import CreateUserSerializer, GetUserSerializer, GetGroupSerializer, CreateGroupSerializer, UpdateGroupSerializer, GetUserGroupsSerializer
-from .serializers import CreateEntranceKeySerializer, ParseEntranceKeySerializer
+from .serializers import CreateEntranceKeySerializer, GetGroupMembersSerializer
 from .permissions import *
 from .decorators import *
 from rest_framework.decorators import api_view
@@ -159,7 +159,7 @@ def create_group(request):
         group = Group.objects.create(**serializer.validated_data)
 
         UserGroup.objects.create(group=group, user=request.user, is_moderator=True)
-        data = {'group_param': group.id,
+        data = {'group_id': group.id,
                 'success': 'Group Created, user is moderator'}
         return Response(data=data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -213,12 +213,12 @@ class UserGroupViews(APIView):
         return Response({"message":"User removed from group"}, status=status.HTTP_204_NO_CONTENT)
     
 @api_view(['GET'])
-@method_decorator(validate_group_param)
-@method_decorator(require_user_authenticated)
-@method_decorator(require_user_member)
-def get_group_users(self, request, group_param, format=None):
+@validate_group_param
+@require_user_authenticated
+@require_user_member
+def get_group_users(request, group_param):
     users = UserGroup.objects.filter(group=group_param)
-    serializer = GetUserSerializer(users, many=True)
+    serializer = GetGroupMembersSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])

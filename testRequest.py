@@ -2,7 +2,7 @@ import requests, json
 
 
 url = 'http://127.0.0.1:8000/accounts/token/'
-url = 'http://127.0.0.1:8000/accounts/group/'
+url = 'http://127.0.0.1:8000/accounts/group/1/user/'
 
 data = {
     #'username': 'testuser',
@@ -17,7 +17,7 @@ header = {
 
 # karlovrd@gmail.com - 7d67cc874c6d4bf4918ad2d07cbab989
 
-response = requests.post(url, data=json.dumps(data), headers=header)
+response = requests.get(url, data=json.dumps(data), headers=header)
 
 print(response.status_code)
 print(response.content)

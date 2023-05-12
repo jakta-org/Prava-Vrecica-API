@@ -1,7 +1,7 @@
 
 root = https://karlo13.pythonanywhere.com/
 
-/accounts/entrance-key/
+/accounts/entrance_key/
 	POST:
         int group_id        - opcinalno
 		datetime expires_at - opcinalno
@@ -10,6 +10,11 @@ root = https://karlo13.pythonanywhere.com/
         returns entrance_code
 
 /accounts/user/
+	GET:
+		{require admin token}
+        ---------> 
+        returns user list
+
 	POST:
 		string email
 		string password
@@ -43,6 +48,25 @@ root = https://karlo13.pythonanywhere.com/
         ---------> 
         returns  meta data
 
+/accounts/user/<int:pk>/score/
+    GET:
+        {require token}
+        ---------> 
+        returns score
+
+    PUT:
+        {require token}
+        int score
+        ---------> 
+        returns  score
+    
+    # path zbroji score na vec postojeci score
+    PATCH:
+        {require token}
+        int score
+        ---------> 
+        returns  score
+
 /feedback/feedback/
     POST:
         {require token}
@@ -53,6 +77,59 @@ root = https://karlo13.pythonanywhere.com/
         bool 	is_trusted 	- opcionalno (iskreno nez kad bi ovo koristili)
         ---------> 
         returns  feedback
+
+accounts/group/
+    POST:
+        {require token}
+        string type
+        string settings     - opcinalno (json)
+        string meta_data    - opcionalno (json)
+        ---------> 
+        returns  group
+
+accounts/group/<int:pk>/
+    GET:
+        {require token}
+        ---------> 
+        returns  group
+
+    PUT:
+        {require token}
+        string type
+        string settings     - (json)
+        string meta_data    - (json)
+        ---------> 
+        returns  group
+
+    DELETE:
+        {require token}
+        ---------> 
+        returns msg, status
+
+accounts/user/<int:pk>/group/
+    GET:
+        {require token}
+        ---------> 
+        returns  group_id list [1,2,6,7]
+
+accounts/user/<int:pk>/group/<int:group_id>/
+    # ubacuje usera u grupu
+    POST:
+        {require token}
+        ---------> 
+        returns msg, status
+
+    # izbacuje usera iz grupe
+    DELETE:
+        {require token}
+        ---------> 
+        returns msg, status
+
+accounts/group/<int:pk>/user/
+    GET:
+        {require token}
+        ---------> 
+        returns  user_id list [1,2,6,7]
 
 
 Sve argumente za POST stavljas u body
