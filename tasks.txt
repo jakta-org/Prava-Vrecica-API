@@ -3,11 +3,18 @@
 3. Login usera ("našeg načina"), post request
 4. get user info (user/id/meta, user/id, user/...)
 5. post feedback (feedback/)
+6. impl grupa
 -----------------------------------------
 6. get all feedback (feedback/)
 
 7. get all objects (objects/)
 8. get localization # prijevodi za app 
-9. hash tokens
-
 BUG: managers.CustomUserManager.create_user_with_key
+
+BRIŠI FEEDBACK OD TESTOVA
+!!!
+1. omogučiti adminu pristum bilo kojem useru
+2. hash tokens
+3. delete token
+4. kad user kreira grupu, ubaci ga i pretvori u moderatora
+5. onemoguci kreiranje usera bez entrance keya

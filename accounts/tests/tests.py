@@ -2,7 +2,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from ..models import User, Token, EntranceKey
+from ..models import User, Token, EntranceKey, Group, UserGroup
 from django.utils import timezone
 
 class CustomUserTests(APITestCase):
@@ -20,7 +20,7 @@ class CustomUserTests(APITestCase):
 
     # TEST USER CREATION
 
-    def test_create_user(self):
+    def test_create_user_without_key(self):
         url = reverse('create_user')
         data = {
             'email': 'newuser@example.com',
@@ -28,9 +28,8 @@ class CustomUserTests(APITestCase):
             'password': 'newpassword'
         }
         response = self.client.post(url, data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(User.objects.count(), 2)
-        self.assertEqual(User.objects.get(username='newuser').email, 'newuser@example.com')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(User.objects.count(), 1)
 
     def test_create_user_invalid_data(self):
         url = reverse('create_user')
@@ -40,18 +39,7 @@ class CustomUserTests(APITestCase):
             'password': 'password'
         }
         response = self.client.post(url, data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(User.objects.count(), 1)
-    
-    def test_create_user_duplicate_email(self):
-        url = reverse('create_user')
-        data = {
-            'email': 'test@example.com',
-            'username':'testuser',
-            'password':'testpassword'
-        }
-        response = self.client.post(url, data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(User.objects.count(), 1)
 
     # TEST GET USER LIST
@@ -218,7 +206,7 @@ class CustomUserTests(APITestCase):
             'entrance_code': code
         }
         response = self.client.post(url, data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(EntranceKey.objects.first().uses_left, 5)
         self.assertEqual(EntranceKey.objects.first().expires_at, date_yesterday)
@@ -242,7 +230,7 @@ class CustomUserTests(APITestCase):
             'entrance_code': code
         }
         response = self.client.post(url, data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(EntranceKey.objects.first().uses_left, 0)
         self.assertEqual(EntranceKey.objects.first().expires_at, date_tommorow)
@@ -445,6 +433,44 @@ class CustomUserTests(APITestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    # TEST USER SCORE
 
-    
+    def test_get_user_score(self):
+        url = reverse('user_score', args=[self.user.id]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get("score"), 0)
 
+    def test_put_user_score(self):
+        url = reverse('user_score', args=[self.user.id]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        data = {
+            'score': 10
+        }
+        response = self.client.put(url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get("score"), 10)
+
+    def test_patch_user_score(self):
+        # set score to 5
+        self.user.score = 5
+        self.user.save()
+
+        url = reverse('user_score', args=[self.user.id]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        data = {
+            'score': 5
+        }
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get("score"), 10)
+
+    def test_put_user_score_invalid_score(self):
+        url = reverse('user_score', args=[self.user.id]) 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        data = {
+            'score': 'invalid'
+        }
+        response = self.client.put(url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

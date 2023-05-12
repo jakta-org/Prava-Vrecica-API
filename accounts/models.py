@@ -40,6 +40,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     google_id = models.CharField(max_length=100, blank=True)
     apple_id = models.CharField(max_length=100, blank=True)
     meta_data = models.JSONField(blank=True, null=True)
+    score = models.IntegerField(default=0)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
@@ -70,6 +71,27 @@ class EntranceKey(models.Model):
             characters = string.ascii_uppercase + string.digits
             self.code = ''.join(random.choices(characters, k=6))
         return super().save(*args, **kwargs)
+    
+    def __str__(self) -> str:
+        return f'{self.code}'
+
+
+class Group(models.Model):
+    id = models.AutoField(primary_key=True)
+    type = models.CharField(max_length=30, blank=False, null=False)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    settings = models.JSONField(blank=True, null=True)
+    meta_data = models.JSONField(blank=True, null=True)
+
+    def __str__(self) -> str:
+        return f'{self.id}'
+
 
 class UserGroup(models.Model):
-    pass
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    is_moderator = models.BooleanField(default=False)
+    meta_data = models.JSONField(blank=True, null=True)
+    
+
