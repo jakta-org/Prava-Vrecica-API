@@ -42,8 +42,8 @@ class UpdateGroupSerializer(serializers.ModelSerializer):
 
 class GetUserGroupsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Group
-        fields = ['id']
+        model = UserGroup
+        fields = ['group']
 
 class GetGroupMembersSerializer(serializers.ModelSerializer):
     group_score = serializers.CharField(source='score')
