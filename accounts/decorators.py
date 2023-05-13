@@ -116,3 +116,11 @@ def validate_entrence_key(view_func):
     
         return view_func(request, *args, **kwargs)
     return wrapped_view
+
+def temporary_disabled(view_func):
+    """
+    Decorator to temporary disable view.
+    """
+    def wrapped_view(request, *args, **kwargs):
+        return HttpResponseForbidden("View temporary disabled")
+    return wrapped_view

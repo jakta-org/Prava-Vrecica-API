@@ -3,8 +3,7 @@ from .models import EntranceKey, User, Token, Group
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import CreateUserSerializer, GetUserSerializer, GetGroupSerializer, CreateGroupSerializer, UpdateGroupSerializer, GetUserGroupsSerializer
-from .serializers import CreateEntranceKeySerializer, GetGroupMembersSerializer
+from .serializers import *
 from .permissions import *
 from .decorators import *
 from rest_framework.decorators import api_view
@@ -110,24 +109,20 @@ class UserScoreViews(APIView):
     @method_decorator(validate_user_param)
     @method_decorator(require_user_owner)
     def patch(self, request, user_param, format=None):
-        try:
-            score = int(request.data.get('score'))
-        except:
-            return Response({"error":"Score must be integer"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        user_param.score = score + user_param.score
+        serializer = ScoreSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user_param.score += serializer.validated_data['score']
         user_param.save()
         return Response({"score":user_param.score}, status=status.HTTP_200_OK)
 
     @method_decorator(validate_user_param)
     @method_decorator(require_user_owner)
     def put(self, request, user_param, format=None):
-        try:
-            score = int(request.data.get('score'))
-        except:
-            return Response({"error":"Score must be integer"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        user_param.score = score
+        serializer = ScoreSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user_param.score = serializer.validated_data['score']
         user_param.save()
         return Response({"score":user_param.score}, status=status.HTTP_200_OK)
 
@@ -156,7 +151,7 @@ class UserMetaDataViews(APIView):
 def create_group(request):
     serializer = CreateGroupSerializer(data=request.data)
     if serializer.is_valid():
-        group = Group.objects.create(**serializer.validated_data)
+        group = serializer.save()
 
         UserGroup.objects.create(group=group, user=request.user, is_moderator=True)
         data = {'group_id': group.id,
@@ -180,7 +175,7 @@ class GroupViews(APIView):
         serializer = UpdateGroupSerializer(group_param, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({'message':'Group updated'}, status=status.HTTP_200_OK)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -212,11 +207,38 @@ class UserGroupViews(APIView):
         user_group.delete()
         return Response({"message":"User removed from group"}, status=status.HTTP_204_NO_CONTENT)
     
+    @method_decorator(validate_user_param)
+    @method_decorator(validate_group_param)
+    @method_decorator(require_user_authenticated)
+    @method_decorator(require_user_member)
+    @method_decorator(require_user_owner)
+    def put(self, request, user_param, group_param, format=None):
+        user_group = UserGroup.objects.get(user=user_param, group=group_param)
+        serializer = UpdateUserGroupSerializer(user_group, data=request.data)
+        serializer.save()
+        return Response({"message":"User group data updated"}, status=status.HTTP_200_OK)
+    
+    @method_decorator(validate_user_param)
+    @method_decorator(validate_group_param)
+    @method_decorator(require_user_authenticated)
+    @method_decorator(require_user_member)
+    @method_decorator(require_user_owner)
+    def patch(self, request, user_param, group_param, format=None):
+        user_group = UserGroup.objects.get(user=user_param, group=group_param)
+        serializer = ScoreSerializer(data=request.data)
+
+        if serializer.is_valid(raise_exception=True):
+            user_group.score = user_group.score + serializer.validated_data['score']
+            user_group.save()
+            return Response({"message":"User group data updated"}, status=status.HTTP_200_OK)
+    
+
+    
 @api_view(['GET'])
 @validate_group_param
 @require_user_authenticated
 @require_user_member
-def get_group_users(request, group_param):
+def get_group_members(request, group_param):
     users = UserGroup.objects.filter(group=group_param)
     serializer = GetGroupMembersSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -227,6 +249,5 @@ def get_group_users(request, group_param):
 @require_user_owner
 def get_user_groups(request, user_param):
     groups = UserGroup.objects.filter(user=user_param)
-    # get only group ids in list
     serializer = GetUserGroupsSerializer(groups, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)

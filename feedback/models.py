@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+import os
 
 class Feedback(models.Model):
     id = models.AutoField(primary_key=True)
@@ -12,6 +13,10 @@ class Feedback(models.Model):
 
     def __str__(self):
         return str(self.id)
+    
+    def delete(self, *args, **kwargs):
+        self.image.delete()
+        super().delete(*args, **kwargs)
     
 class RecognitionObject(models.Model):
     id = models.AutoField(primary_key=True)

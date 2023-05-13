@@ -297,6 +297,18 @@ class GroupTest(APITestCase):
         self.token = Token.objects.create(user=self.user)
         self.token.save()
 
+        self.user2 = User.objects.create_user(
+            email='test2@example.com',
+            username='testuser2',
+            password='testpassword',
+            is_active=True,
+            is_staff=False,
+        )
+        self.user2.save()
+        self.token2 = Token.objects.create(user=self.user2)
+        self.token2.save()
+
+
         # create group
 
         self.group = Group.objects.create(
@@ -305,7 +317,8 @@ class GroupTest(APITestCase):
         )
         self.group.save()
 
-        self.userGroup = UserGroup.objects.create(user=self.user, group=self.group, is_moderator=True).save()
+        self.userGroup = UserGroup.objects.create(user=self.user, group=self.group, is_moderator=True)
+        self.userGroup.save()
 
     def test_user_groups(self):
         url = reverse('user_groups', args=[self.user.id])
@@ -313,3 +326,72 @@ class GroupTest(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
+
+    def test_user_groups_invalid_id(self):
+        url = reverse('user_groups', args=[123])
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_user_groups_user_not_member(self):
+        self.userGroup.delete()
+
+        url = reverse('user_groups', args=[self.user.id])
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        # user is not member of any group
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+    def test_user_groups_user_not_moderator(self):
+        self.userGroup.is_moderator = False
+        self.userGroup.save()
+
+        url = reverse('user_groups', args=[self.user.id])
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    # TEST GROUP MEMBERS
+
+    def test_group_members(self):
+        UserGroup.objects.create(user=self.user2, group=self.group, is_moderator=False).save()
+
+        url = reverse('group_members', args=[self.group.id])
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertIn('group_score', response.data[0])
+        self.assertIn('group_score', response.data[1])
+        self.assertIn('user', response.data[0])
+        self.assertIn('user', response.data[1])
+
+        self.assertEqual(response.data[0]['user']['username'], 'testuser')
+
+    def test_group_members_invalid_id(self):
+        url = reverse('group_members', args=[123])
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_group_members_user_not_member(self):
+        self.userGroup.delete()
+
+        url = reverse('group_members', args=[self.group.id])
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_group_members_user_not_moderator(self):
+        self.userGroup.is_moderator = False
+        self.userGroup.save()
+
+        url = reverse('group_members', args=[self.group.id])
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+

@@ -5,3 +5,5 @@ from PravaVrecica import settings as proj_settings
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 FEEDBACK_DIR =  proj_settings.MEDIA_ROOT / 'feedback'
+
+DEFAULT_RETURN_FEEDBACK_NUM = 10

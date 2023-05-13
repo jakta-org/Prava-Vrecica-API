@@ -94,6 +94,7 @@ class UserGroup(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     is_moderator = models.BooleanField(default=False)
     meta_data = models.JSONField(blank=True, null=True)
+    score = models.IntegerField(default=0)
 
     def __str__(self) -> str:
         return f'{self.user} - {self.group}'
