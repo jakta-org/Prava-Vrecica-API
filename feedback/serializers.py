@@ -19,6 +19,7 @@ class CreateFeedbackSerializer(serializers.ModelSerializer):
 
         ext = file_name.split('.')[-1]
         file_name = str(feedback.id) + '.' + ext
+        feedback.image.name = file_name
 
         feedback.image.save(file_name, ContentFile(base64.b64decode(image_data)), save=True)
         return feedback

@@ -325,6 +325,7 @@ class CustomUserTests(APITestCase):
         url = reverse('user_meta_data', args=[self.user.id]) 
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.token)
         response = self.client.get(url)
+        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, None)
 

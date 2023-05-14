@@ -326,6 +326,8 @@ class GroupTest(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
+        self.assertIn('id', response.data[0])
+        self.assertEqual(response.data[0]['id'], 1)
 
     def test_user_groups_invalid_id(self):
         url = reverse('user_groups', args=[123])

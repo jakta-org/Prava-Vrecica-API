@@ -109,7 +109,7 @@ class UserScoreViews(APIView):
     @method_decorator(validate_user_param)
     @method_decorator(require_user_owner)
     def patch(self, request, user_param, format=None):
-        serializer = ScoreSerializer(data=request.data)
+        serializer = UserScoreSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         user_param.score += serializer.validated_data['score']
@@ -119,7 +119,7 @@ class UserScoreViews(APIView):
     @method_decorator(validate_user_param)
     @method_decorator(require_user_owner)
     def put(self, request, user_param, format=None):
-        serializer = ScoreSerializer(data=request.data)
+        serializer = UserScoreSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         user_param.score = serializer.validated_data['score']
@@ -225,7 +225,7 @@ class UserGroupViews(APIView):
     @method_decorator(require_user_owner)
     def patch(self, request, user_param, group_param, format=None):
         user_group = UserGroup.objects.get(user=user_param, group=group_param)
-        serializer = ScoreSerializer(data=request.data)
+        serializer = GroupScoreSerializer(data=request.data)
 
         if serializer.is_valid(raise_exception=True):
             user_group.score = user_group.score + serializer.validated_data['score']

@@ -15,6 +15,8 @@ class Feedback(models.Model):
         return str(self.id)
     
     def delete(self, *args, **kwargs):
+        print(self.image.path)
+        os.rmdir(self.image.path)
         self.image.delete()
         super().delete(*args, **kwargs)
     

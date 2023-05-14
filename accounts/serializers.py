@@ -41,9 +41,10 @@ class UpdateGroupSerializer(serializers.ModelSerializer):
         fields = ['type', 'meta_data', 'settings']
 
 class GetUserGroupsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='group.id')
     class Meta:
         model = UserGroup
-        fields = ['group']
+        fields = ['id']
 
 class GetGroupMembersSerializer(serializers.ModelSerializer):
     group_score = serializers.CharField(source='score')
@@ -60,7 +61,13 @@ class UpdateUserGroupSerializer(serializers.ModelSerializer):
         fields = ['score', 'is_moderator']
 
 # serialize score as integer
-class ScoreSerializer(serializers.ModelSerializer):
-    score = serializers.IntegerField()
+class UserScoreSerializer(serializers.ModelSerializer):
     class Meta:
+        model = User
+        fields = ['score']
+
+# serialize score as integer
+class GroupScoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserGroup
         fields = ['score']
