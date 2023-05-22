@@ -1,1 +1,9 @@
 db.sqlite3
+tasks.txt
+db_shema.txt
+db_shema_groups.txt
+__pycache__
+testRequest.py
+.vscode
+test_image.png
+endpoints.txt

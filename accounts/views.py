@@ -33,6 +33,8 @@ class UserViews(APIView):
                 group = Group.objects.get(id=key.group_id)
                 UserGroup.objects.create(group=group, user=user, is_moderator=False).save()
 
+        # NE VRACAJ TOKEN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        
         return Response({'token': token.token}, status=status.HTTP_201_CREATED)
             
     
@@ -65,6 +67,8 @@ class TokenViews(APIView):
         return Response({'error': 'Invalid Credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@require_user_authenticated
+@admin_required
 def create_entrance_key(request):
     serializer = CreateEntranceKeySerializer(data=request.data)
     if serializer.is_valid():
@@ -212,6 +216,7 @@ class UserGroupViews(APIView):
     @method_decorator(require_user_authenticated)
     @method_decorator(require_user_member)
     @method_decorator(require_user_owner)
+    @method_decorator(require_user_moderator)
     def put(self, request, user_param, group_param, format=None):
         user_group = UserGroup.objects.get(user=user_param, group=group_param)
         serializer = UpdateUserGroupSerializer(user_group, data=request.data)

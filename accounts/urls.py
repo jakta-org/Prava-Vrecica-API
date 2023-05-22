@@ -19,35 +19,3 @@ urlpatterns = [
 
     path('user/<int:user_id>/group/', views.get_user_groups, name='user_groups'),
 ]
-
-'''
-/group/1/user/2/   POST: [ENTRANCE_KEY]
-                   DELETE:  
-
-group/2/user/   - NE TREBA
-{
-    users: [
-        {
-            id: 1,
-            email: "email",
-            username: "username",
-            score: 0,
-        },
-        {
-            id: 2,
-            email: "email",
-            username: "username",
-            score: 5,
-        },
-}
-
-user/1/group/   - TREBA
-{
-    group_ids: [
-        1,
-        4,
-        6,
-    ]
-}
-
-'''
